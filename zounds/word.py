@@ -63,6 +63,8 @@ class Word:
         """
         if script is None:
             return self._ipa
+        else:
+            raise NotImplemented
 
     def get_scripts (self):
         """Returns a list of `.Script`\s that are 'native' for this word.
@@ -73,7 +75,8 @@ class Word:
         :rtype: `list` of `.Script`\s
 
         """
-        pass
+        raise NotImplemented
+        return []
     
     @property
     def language (self):

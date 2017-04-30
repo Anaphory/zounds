@@ -21,3 +21,7 @@ class RuleComponent:
         for element in self._elements:
             forms.append(element.applier_form)
         return ''.join(forms)
+
+    def __repr__(self):
+        return "".join([str(element) for element in self._elements])
+

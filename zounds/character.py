@@ -30,6 +30,9 @@ class Character (WordElement):
     def __str__ (self):
         return self.ipa
 
+    def __repr__ (self):
+        return self.ipa
+
     @staticmethod
     def _create_new (cls, binary_features_model, ipa):
         # Cache instances by their initialisation arguments.

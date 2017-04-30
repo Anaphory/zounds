@@ -1,3 +1,4 @@
+from .constants import SOURCE_PLACEHOLDER
 from .rule_element import RuleElement
 
 
@@ -15,6 +16,9 @@ class Placeholder (RuleElement):
         super().__init__(binary_features_model)
         self._source_component = source_component
 
+    def __repr__(self):
+        return SOURCE_PLACEHOLDER
+    
     @property
     def applier_form (self):
         """Returns this element in a form suitable for use by an

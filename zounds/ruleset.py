@@ -1,3 +1,5 @@
+from .constants import FORWARDS, BACKWARDS
+
 class Ruleset:
 
     def __init__ (self, binary_features_model):
@@ -64,7 +66,7 @@ class Ruleset:
         :rtype: `list` of `.Rule`\s
 
         """
-        pass
+        raise NotImplemented
 
     def get_language_dates (self, language):
         """Returns the dates associated with `language`.
@@ -78,9 +80,8 @@ class Ruleset:
         """
         return sorted(self._data[language].keys())
 
-    def get_rules (self, language, date):
-        """Returns the rules, in `.FORWARDS` direction, in `language`
-        at `date`.
+    def get_rules(self, language, date, direction=FORWARDS):
+        """Returns the rules, in `language` at `date`.
 
         :param language: the language the rule applies to
         :type: language: `.Language`
@@ -89,6 +90,8 @@ class Ruleset:
         :rtype: `list` of `.Rule`\s
 
         """
+        if direction != FORWARDS:
+            raise NotImplemented
         return self._data[language][date]
 
     @property

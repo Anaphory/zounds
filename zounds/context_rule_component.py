@@ -21,5 +21,3 @@ class ContextRuleComponent (RuleComponent):
         forms.insert(insert_index, '(?P<start>')
         forms.append(')')
         return ''.join(forms)
-
-

@@ -1,5 +1,7 @@
 import re
 
+from .constants import RULE_COMPONENT_DIVIDER
+
 
 class Rule:
 
@@ -45,6 +47,14 @@ class Rule:
         self._context = context
         self._result = result
         self._language.add_rule(date, self)
+
+    def __repr__(self):
+        return "Rule {:}{:s}{:}{:s}{:}".format(
+            self._source,
+            RULE_COMPONENT_DIVIDER,
+            self._result,
+            RULE_COMPONENT_DIVIDER,
+            self._context)
 
     @property
     def applier_form (self):

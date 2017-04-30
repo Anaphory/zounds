@@ -25,6 +25,9 @@ class Feature:
         # For sorting purposes.
         return self.name < other.name
 
+    def __repr__(self):
+        return "<F {:}>".format(self.name)
+
     def __str__ (self):
         return self.name
     

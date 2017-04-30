@@ -14,6 +14,75 @@ from .ruleset import Ruleset
 from .source_rule_component import SourceRuleComponent
 
 
+def define_base_feature_set(base_features):
+    """A `ParserElement` representing a base feature set.
+
+    >>> bfs = define_base_feature_set(["cons", "son"])
+    >>> bfs.parseString("[]", parseAll=True)
+    ([], {})
+    >>> bfs.parseString("a", parseAll=True)
+    Traceback (most recent call last):
+    ...
+    pyparsing.ParseException: Expected "[" (at char 0), (line:1, col:1)
+    >>> bfs.parseString("[+cons]", parseAll=True)
+    ([(['+', 'cons'], {})], {})
+    >>> bfs.parseString("[-son +cons]", parseAll=True)
+    ([(['-', 'son'], {}), (['+', 'cons'], {})], {})
+    >>> bfs.parseString("[βson βcons]", parseAll=True)
+    ([(['β', 'son'], {}), (['β', 'cons'], {})], {})
+    >>> bfs.parseString("[+invalid]", parseAll=True)
+    Traceback (most recent call last):
+    ...
+    pyparsing.ParseException: Expected "]" (at char 1), (line:1, col:2)
+
+    """
+    open_marker = Literal(OPEN_BASE_FEATURE_SET)
+    close_marker = Literal(CLOSE_BASE_FEATURE_SET)
+    plus = Literal('+')
+    minus = Literal('-') ^ Literal('\N{MINUS SIGN}')
+    homorganic_variable = Or([Literal(symbol) for symbol in
+                              HOMORGANIC_VARIABLES])
+    # homorganic_variable.setParseAction(self._handle_homorganic_variable)
+    feature = Or([Literal(str(feature)) for feature in base_features])
+    feature_value = Group((plus ^ minus ^ homorganic_variable) + feature)
+    feature_set = (
+        Suppress(open_marker) +
+        ZeroOrMore(feature_value) +
+        Suppress(close_marker))
+    # feature_set.setParseAction(self._handle_base_feature_set)
+    return feature_set
+
+
+def define_cluster(base_characters, diacritic_characters,
+                   spacing_characters, suprasegmental_characters):
+    """A `ParserElement` representing an IPA cluster.
+
+    >>> cl = define_cluster("ab", "ʰ", " ", ":")
+    >>> cl.parseString("a", parseAll=True)
+    (['a'], {})
+    >>> cl.parseString("abba", parseAll=True)
+    Traceback (most recent call last):
+    ...
+    pyparsing.ParseException: Expected end of text (at char 1), (line:1, col:2)
+
+    """
+    base_characters = ''.join([
+        str(character) for character in base_characters])
+    diacritic_characters = ''.join([
+        str(character) for character in diacritic_characters])
+    spacing_characters = ''.join([
+        str(character) for character in spacing_characters])
+    suprasegmental_characters = ''.join([
+        str(character) for character in suprasegmental_characters])
+    base_character = Word(base_characters, exact=1)
+    diacritic_character = Word(diacritic_characters, exact=1)
+    spacing_character = Word(spacing_characters, exact=1)
+    suprasegmental_character = Word(suprasegmental_characters, exact=1)
+    phoneme = Combine(base_character + ZeroOrMore(diacritic_character) +
+                      ZeroOrMore(spacing_character))
+    cluster = phoneme ^ OneOrMore(suprasegmental_character)
+    return cluster
+
 class RulesetParser:
 
     """Class for parsing a ruleset configuration and generating a
@@ -60,42 +129,6 @@ class RulesetParser:
             self._create_language(ruleset, language_section)
         return ruleset
         
-    def _define_base_feature_set (self):
-        open_marker = Literal(OPEN_BASE_FEATURE_SET)
-        close_marker = Literal(CLOSE_BASE_FEATURE_SET)
-        plus = Literal('+')
-        minus = Literal('-') ^ Literal('\N{MINUS SIGN}')
-        homorganic_variable = Or([Literal(symbol) for symbol in
-                                  HOMORGANIC_VARIABLES])
-        #homorganic_variable.setParseAction(self._handle_homorganic_variable)
-        feature = Or([Literal(str(feature)) for feature in
-                      self._binary_features_model.base_features])
-        feature_value = Group((plus ^ minus ^ homorganic_variable) + feature)
-        feature_set = Suppress(open_marker) + ZeroOrMore(feature_value) + \
-            Suppress(close_marker)
-        #feature_set.setParseAction(self._handle_base_feature_set)
-        return feature_set
-        
-    def _define_cluster (self):
-        """Returns a `pyparsing.ParserElement` representing an IPA
-        cluster."""
-        base_characters = ''.join([str(character) for character in
-                                   self._binary_features_model.base_characters])
-        diacritic_characters = ''.join([str(character) for character in
-                                        self._binary_features_model.diacritic_characters])
-        spacing_characters = ''.join([str(character) for character in
-                                      self._binary_features_model.spacing_characters])
-        suprasegmental_characters = ''.join([str(character) for character in
-                                             self._binary_features_model.suprasegmental_characters])
-        base_character = Word(base_characters, exact=1)
-        diacritic_character = Word(diacritic_characters, exact=1)
-        spacing_character = Word(spacing_characters, exact=1)
-        suprasegmental_character = Word(suprasegmental_characters, exact=1)
-        phoneme = Combine(base_character + ZeroOrMore(diacritic_character) +
-                          ZeroOrMore(spacing_character))
-        cluster = phoneme ^ OneOrMore(suprasegmental_character)
-        cluster.setParseAction(self._handle_cluster)
-        return cluster
 
     def _define_context_component (self, cluster, base_feature_set):
         placeholder = Literal(SOURCE_PLACEHOLDER)
@@ -108,8 +141,13 @@ class RulesetParser:
     def _define_grammar (self):
         heading_open = Literal('[').suppress()
         heading_close = Literal(']').suppress()
-        cluster = self._define_cluster()
-        base_feature_set = self._define_base_feature_set()
+        cluster = define_cluster(
+            self._binary_features_model.base_characters,
+            self._binary_features_model.diacritic_characters,
+            self._binary_features_model.spacing_characters,
+            self._binary_features_model.suprasegmental_characters)
+        cluster.setParseAction(self._handle_cluster)
+        base_feature_set = define_base_feature_set(self._binary_features_model.base_features)
         rule = self._define_rule(cluster, base_feature_set)
         rules = OneOrMore(rule).setResultsName('rules')
         date_number = Word('-'+nums, nums).setResultsName('date_number')
@@ -120,7 +158,7 @@ class RulesetParser:
             + date_name + heading_close
         date_section = date_heading + rules
         date_sections = Group(OneOrMore(date_section))
-        language_name = Combine(OneOrMore(Word(alphas)), adjacent=False,
+        language_name = Combine(OneOrMore(Word(alphanums+"-")), adjacent=False,
                                 joinString=' ').setResultsName('language_name')
         language_heading = heading_open + Suppress(Keyword('Language')) + \
             language_name + heading_close
@@ -189,5 +227,5 @@ class RulesetParser:
         :rtype: `.Ruleset`
 
         """
-        data = self._grammar.parseString(configuration)
+        data = self._grammar.parseString(configuration, parseAll=True)
         return self._create_ruleset(data)

@@ -3,12 +3,12 @@
 # of a character/cluster and as keys in the binary features model
 # dictionaries.
 #: Symbol specifying that a character possesses a feature.
-HAS_FEATURE = True
+HAS_FEATURE = '1'
 #: Symbol specifying that a character has no relationship with a
 #: feature. This value is not allowed for a base character.
-INAPPLICABLE_FEATURE = None
+INAPPLICABLE_FEATURE = '2'
 #: Symbol specifying that a character does not possess a feature.
-NOT_HAS_FEATURE = None
+NOT_HAS_FEATURE = '0'
 
 #: Applier form marker, indicating the start of a new normalised form
 #: sequence.
